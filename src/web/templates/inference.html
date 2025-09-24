@@ -55,7 +55,44 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 <script>
+/*Interception (un peu plus bas) et stockage de la prediction globalement (ici)*/
+let prediction = ""
+
+/*fonction pour envoyer a la route feedback le feedback ansi que la prediction*/
+function sendFeedback(feedback='RAS') {
+  const token = document.getElementById("apiToken").value;
+  let data = { 
+    'feedback':feedback,
+    'prediction' : prediction
+   };
+   alert(data.feedback + "->" + data.prediction);
+  axios.post(
+    "/api/feedback",
+    data,
+    {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    }
+  )
+  .then(response => {
+    alert("ok");
+    console.log(response.data);
+  })
+  .catch(error => {
+    alert("quelque chose s'est mal passé");
+    console.error(error);
+  });
+
+}
+/*fin de la fonction*/
+
+
+
 document.getElementById('imageFile').addEventListener('change', function(e) {
     const file = e.target.files[0];
     if (file) {
@@ -82,6 +119,10 @@ document.getElementById('predictionForm').addEventListener('submit', async funct
     const file = fileInput.files[0];
     const token = tokenInput.value;
     
+    /*Petites mofifs importantes pour le feedback
+    let feedback = 1;
+    Fin modifs */
+    
     if (!file) {
         alert('Veuillez sélectionner une image');
         return;
@@ -107,6 +148,8 @@ document.getElementById('predictionForm').addEventListener('submit', async funct
         
         if (response.ok) {
             const isDog = data.prediction === 'Dog';
+
+            prediction = data.prediction /*In terception de la prediction*/
             const emoji = isDog ? '🐶' : '🐱';
             const bgColor = isDog ? 'bg-warning' : 'bg-success';
             
@@ -125,6 +168,16 @@ document.getElementById('predictionForm').addEventListener('submit', async funct
                             🐶 Chien: ${data.probabilities.dog}
                         </div>
                     </div>
+                </div>
+
+                <!-- Code HTML ajouté pour le feedback -->
+                
+                <div class="user-feedback">
+                    <p>La prediction vous semble t'elle corecte ?<p/>
+                        <div>
+                            <span onclick="sendFeedback('OUI')">Oui : 😊</span>
+                            <span onclick="sendFeedback('NON')">Non : 😞</span>
+                        </div>
                 </div>
             `;
         } else {
