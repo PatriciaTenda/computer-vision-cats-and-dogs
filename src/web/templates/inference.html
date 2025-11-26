@@ -58,17 +58,24 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
+/*Logique pour envoyer le feedback avant plusieurs cas*/
+
+
+
 /*Interception (un peu plus bas) et stockage de la prediction globalement (ici)*/
-let prediction = ""
+let prediction = "";
+let updatedId = false;
 
 /*fonction pour envoyer a la route feedback le feedback ansi que la prediction*/
-function sendFeedback(feedback='RAS') {
+function sendFeedback(feedback='RAS', updated_id=updatedId) {
   const token = document.getElementById("apiToken").value;
   let data = { 
     'feedback':feedback,
-    'prediction' : prediction
+    'prediction' : prediction,
+    'updated_id': updated_id,
    };
-   alert(data.feedback + "->" + data.prediction);
+   
+   alert(data.feedback + "➡️" + data.prediction);
   axios.post(
     "/api/feedback",
     data,
@@ -80,8 +87,17 @@ function sendFeedback(feedback='RAS') {
     }
   )
   .then(response => {
-    alert("ok");
+    
     console.log(response.data);
+    
+    if(updatedId == false){
+        alert('Feedback par défault : Rien à signaler')
+    }
+    else{
+        alert('Feedback modifié : ' + feedback + ' à l\'id : ' + updatedId  )
+        alert(data.feedback + "➡️" + data.prediction);
+    }
+    updatedId = response.data.updated_id;
   })
   .catch(error => {
     alert("quelque chose s'est mal passé");
@@ -117,6 +133,7 @@ document.getElementById('predictionForm').addEventListener('submit', async funct
     const predictBtn = document.getElementById('predictBtn');
     
     const file = fileInput.files[0];
+
     const token = tokenInput.value;
     
     /*Petites mofifs importantes pour le feedback
@@ -190,6 +207,8 @@ document.getElementById('predictionForm').addEventListener('submit', async funct
         }
         
         result.style.display = 'block';
+        updatedId = false;
+        sendFeedback();
         
     } catch (error) {
         result.innerHTML = `
